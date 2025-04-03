@@ -6,11 +6,15 @@ int main(){
   char b;
   std::cin >> a;
   std::cin >> b;
-  std::cout << a << ":" << b << std::endl;
+ 
   if(a > 0){
+ std::cout << a << ":" << b << std::endl;
+  
+	}else{
 
-    std::cout << b << ":" << 
-	}
+
+	 std ::cout << b << ":" << a << std::endl;
+}
 
   return 0;
 }
