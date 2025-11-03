@@ -1,0 +1,16 @@
+﻿---
+BasedOnStyle: Mozilla
+AllowShortBlocksOnASingleLine: 'true'
+AllowShortCaseLabelsOnASingleLine: 'true'
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: 'true'
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+ColumnLimit: '100'
+IndentWidth: '4'
+TabWidth: '4'
+UseTab: Never
+
+...

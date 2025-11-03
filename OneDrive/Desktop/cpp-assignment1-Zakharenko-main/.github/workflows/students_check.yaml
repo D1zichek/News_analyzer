@@ -1,0 +1,86 @@
+name: Students Check
+run-name: Students Check
+
+on:
+  pull_request_target:
+
+jobs:
+  check_files:
+    name: Check files not changed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Check main and workflow files not changed
+        run: |
+          main_sum=$(md5sum src/main.cpp | awk '{print $1}')
+          workflow_sum=$(md5sum .github/workflows/students_check.yaml | awk '{print $1}')
+          if [[ "$main_sum" == "${{secrets.MAIN_SUM}}" && "$workflow_sum" == "${{secrets.WORKFLOW_SUM}}" ]]; then
+            exit 0
+          else
+            exit 1
+          fi
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: check_files
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Build
+        run: |
+          cmake -B build .
+          cmake --build build/
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: executable
+          path: build/a1
+
+  run:
+    name: Run Application
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download executable
+        uses: actions/download-artifact@v5
+        with:
+          name: executable
+      - name: Run application
+        run: |
+          chmod +x a1
+          ./a1 | tee output.txt
+      - name: Upload logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs
+          path: output.txt
+
+  check_output:
+    name: Check that output correct
+    runs-on: ubuntu-latest
+    needs: run
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Expose git commit data
+        uses: rlespinasse/git-commit-data-action@v1
+      - name: Download logs
+        uses: actions/download-artifact@v5
+        with:
+          name: logs
+      - name: Check output logs
+        run: |
+          response_code=$(curl -o /dev/null -w '%{http_code}\n' -X POST -H "Content-Type: application/json" -d "{\"group_ids\": [\"Z-31\", \"Z-32\"], \"assignment_id\": \"Singleton\", \"commiter\": \"${{env.GIT_COMMIT_AUTHOR}}\", \"output\": \"$(cat output.txt)\"}" -L http://${{secrets.CHECKER_HOST}}/submit -s)
+          if [[ "$response_code" -eq 200 ]]; then
+            exit 0
+          else
+            exit 1
+          fi
